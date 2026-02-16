@@ -9,22 +9,8 @@ import { updateDailyLog } from '@/app/actions/protocol';
 import { format } from 'date-fns';
 import { ProtocolRule } from '@/app/actions/rules';
 import { RuleDimmer } from '@/components/graduation/RuleDimmer';
-
-export interface DailyLog {
-  id?: string;
-  user_id?: string;
-  date: string;
-  anchor_therapy: boolean;
-  anchor_sobriety: boolean;
-  anchor_sleep: boolean;
-  anchor_movement: boolean;
-  mandate_exposure: boolean;
-  mandate_coursework: boolean;
-  mandate_interaction: boolean;
-  night_anchor_completed: boolean;
-  notes?: string | null;
-  score?: number | null;
-}
+import { usePracticeStore } from '@/lib/stores/usePracticeStore';
+import { DailyLog } from '@/types';
 
 interface DashboardProps {
   initialDailyLog: DailyLog;
@@ -34,23 +20,52 @@ interface DashboardProps {
 }
 
 export function Dashboard({ initialDailyLog, day, mulligans, rules = [] }: DashboardProps) {
-  // Use local state instead of optimistic to handle Day 0 behavior correctly
+  const isPracticeMode = day === 0;
+  
+  // Local state for normal days
   const [log, setLog] = useState<DailyLog>(initialDailyLog);
+  
+  // Store for Practice Mode persistence
+  const { practiceLog, setPracticeLog, updatePracticeLog } = usePracticeStore();
+  const [isStoreLoaded, setIsStoreLoaded] = useState(false);
+  
   const [isPending, startTransition] = useTransition();
 
-  // Sync with server updates if initialDailyLog changes (e.g. revalidation)
+  // Initialize practice store on mount if in practice mode
   useEffect(() => {
-    setLog(initialDailyLog);
-  }, [initialDailyLog]);
+    if (isPracticeMode) {
+      // If store is empty, initialize with props
+      if (!practiceLog) {
+        setPracticeLog(initialDailyLog);
+      }
+      setIsStoreLoaded(true);
+    }
+  }, [isPracticeMode, initialDailyLog, practiceLog, setPracticeLog]);
+
+  // Sync with server updates if initialDailyLog changes (e.g. revalidation) - Only for non-practice days
+  useEffect(() => {
+    if (!isPracticeMode) {
+      setLog(initialDailyLog);
+    }
+  }, [initialDailyLog, isPracticeMode]);
+
+  // Determine which log to display
+  // For Practice Mode: use store (if loaded) -> otherwise initial
+  // For Real Mode: use local state
+  const displayLog = isPracticeMode 
+    ? (practiceLog || initialDailyLog) 
+    : log;
 
   const handleToggle = async (column: string, currentValue: boolean) => {
     const newValue = !currentValue;
     
-    // Immediate local update (Optimistic UI)
-    setLog(prev => ({ ...prev, [column]: newValue }));
-
-    // Only persist to server if NOT Practice Mode (Day 0)
-    if (day > 0) {
+    if (isPracticeMode) {
+      // Update store directly
+      updatePracticeLog(column as keyof DailyLog, newValue);
+    } else {
+      // Normal flow: Update local state + Server Action
+      setLog(prev => ({ ...prev, [column]: newValue }));
+      
       startTransition(async () => {
         try {
           await updateDailyLog(initialDailyLog.date, column, newValue);
@@ -67,36 +82,34 @@ export function Dashboard({ initialDailyLog, day, mulligans, rules = [] }: Dashb
     { 
       id: 'anchor_sobriety', 
       label: 'Sobriety (Zero THC)', 
-      checked: log.anchor_sobriety,
+      checked: displayLog.anchor_sobriety,
       status: rules.find(r => r.rule_id === 'anchor_sobriety')?.status 
     },
     { 
       id: 'anchor_sleep', 
       label: 'Sleep (Digital Sundown)', 
-      checked: log.anchor_sleep,
+      checked: displayLog.anchor_sleep,
       status: rules.find(r => r.rule_id === 'anchor_sleep')?.status 
     },
     { 
       id: 'anchor_therapy', 
       label: 'Therapy (Weekly)', 
-      checked: log.anchor_therapy,
+      checked: displayLog.anchor_therapy,
       status: rules.find(r => r.rule_id === 'anchor_therapy')?.status 
     },
     { 
       id: 'anchor_movement', 
       label: 'Movement (5/week)', 
-      checked: log.anchor_movement,
+      checked: displayLog.anchor_movement,
       status: rules.find(r => r.rule_id === 'anchor_movement')?.status 
     },
   ];
 
   const mandates: AnchorItem[] = [
-    { id: 'mandate_exposure', label: 'Public Exposure', checked: log.mandate_exposure },
-    { id: 'mandate_coursework', label: 'Coursework', checked: log.mandate_coursework },
-    { id: 'mandate_interaction', label: 'Human Interaction', checked: log.mandate_interaction },
+    { id: 'mandate_exposure', label: 'Public Exposure', checked: displayLog.mandate_exposure },
+    { id: 'mandate_coursework', label: 'Coursework', checked: displayLog.mandate_coursework },
+    { id: 'mandate_interaction', label: 'Human Interaction', checked: displayLog.mandate_interaction },
   ];
-
-  const isPracticeMode = day === 0;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-32">
@@ -112,14 +125,14 @@ export function Dashboard({ initialDailyLog, day, mulligans, rules = [] }: Dashb
         <AnchorList 
           title="The 4 Anchors" 
           items={anchors} 
-          onToggle={(id) => handleToggle(id, log[id as keyof DailyLog] as boolean)}
+          onToggle={(id) => handleToggle(id, displayLog[id as keyof DailyLog] as boolean)}
           isPracticeMode={isPracticeMode} 
         />
         
         <AnchorList 
           title="Daily Mandates" 
           items={mandates} 
-          onToggle={(id) => handleToggle(id, log[id as keyof DailyLog] as boolean)}
+          onToggle={(id) => handleToggle(id, displayLog[id as keyof DailyLog] as boolean)}
           isPracticeMode={isPracticeMode} 
         />
         

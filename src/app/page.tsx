@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
-import { Dashboard, DailyLog } from '@/components/dashboard/Dashboard';
+import { Dashboard } from '@/components/dashboard/Dashboard';
+import { DailyLog } from '@/types';
 import { format } from 'date-fns';
 import { getProtocolRules, ProtocolRule } from '@/app/actions/rules';
 
