@@ -19,8 +19,10 @@ interface IntegrityScoreProps {
   logs: DailyLog[];
 }
 
-export default function IntegrityScore({ logs }: IntegrityScoreProps) {
+export default function IntegrityScore({ logs = [] }: IntegrityScoreProps) {
   const { score, trend } = useMemo(() => {
+    if (!logs || logs.length === 0) return { score: 0, trend: 'No Data' };
+    
     const today = new Date();
     
     let totalChecked = 0;

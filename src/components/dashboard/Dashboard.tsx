@@ -1,6 +1,6 @@
 'use client';
 
-import { useOptimistic, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { AnchorList, AnchorItem } from '@/components/dashboard/AnchorList';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { PanicButton } from '@/components/ui/PanicButton';
@@ -34,62 +34,66 @@ interface DashboardProps {
 }
 
 export function Dashboard({ initialDailyLog, day, mulligans, rules = [] }: DashboardProps) {
-  const [optimisticLog, addOptimisticLog] = useOptimistic(
-    initialDailyLog,
-    (state: DailyLog, newLog: Partial<DailyLog>) => ({
-      ...state,
-      ...newLog,
-    })
-  );
-
+  // Use local state instead of optimistic to handle Day 0 behavior correctly
+  const [log, setLog] = useState<DailyLog>(initialDailyLog);
   const [isPending, startTransition] = useTransition();
+
+  // Sync with server updates if initialDailyLog changes (e.g. revalidation)
+  useEffect(() => {
+    setLog(initialDailyLog);
+  }, [initialDailyLog]);
 
   const handleToggle = async (column: string, currentValue: boolean) => {
     const newValue = !currentValue;
     
-    // Optimistically update
-    startTransition(async () => {
-      addOptimisticLog({ [column]: newValue });
-      try {
-        await updateDailyLog(initialDailyLog.date, column, newValue);
-      } catch (error) {
-        console.error('Failed to update log:', error);
-        // In a real app, you might want to revert the optimistic update or show a toast
-      }
-    });
+    // Immediate local update (Optimistic UI)
+    setLog(prev => ({ ...prev, [column]: newValue }));
+
+    // Only persist to server if NOT Practice Mode (Day 0)
+    if (day > 0) {
+      startTransition(async () => {
+        try {
+          await updateDailyLog(initialDailyLog.date, column, newValue);
+        } catch (error) {
+          console.error('Failed to update log:', error);
+          // Revert on failure
+          setLog(prev => ({ ...prev, [column]: currentValue }));
+        }
+      });
+    }
   };
 
   const anchors: AnchorItem[] = [
     { 
       id: 'anchor_sobriety', 
       label: 'Sobriety (Zero THC)', 
-      checked: optimisticLog.anchor_sobriety,
+      checked: log.anchor_sobriety,
       status: rules.find(r => r.rule_id === 'anchor_sobriety')?.status 
     },
     { 
       id: 'anchor_sleep', 
       label: 'Sleep (Digital Sundown)', 
-      checked: optimisticLog.anchor_sleep,
+      checked: log.anchor_sleep,
       status: rules.find(r => r.rule_id === 'anchor_sleep')?.status 
     },
     { 
       id: 'anchor_therapy', 
       label: 'Therapy (Weekly)', 
-      checked: optimisticLog.anchor_therapy,
+      checked: log.anchor_therapy,
       status: rules.find(r => r.rule_id === 'anchor_therapy')?.status 
     },
     { 
       id: 'anchor_movement', 
       label: 'Movement (5/week)', 
-      checked: optimisticLog.anchor_movement,
+      checked: log.anchor_movement,
       status: rules.find(r => r.rule_id === 'anchor_movement')?.status 
     },
   ];
 
   const mandates: AnchorItem[] = [
-    { id: 'mandate_exposure', label: 'Public Exposure', checked: optimisticLog.mandate_exposure },
-    { id: 'mandate_coursework', label: 'Coursework', checked: optimisticLog.mandate_coursework },
-    { id: 'mandate_interaction', label: 'Human Interaction', checked: optimisticLog.mandate_interaction },
+    { id: 'mandate_exposure', label: 'Public Exposure', checked: log.mandate_exposure },
+    { id: 'mandate_coursework', label: 'Coursework', checked: log.mandate_coursework },
+    { id: 'mandate_interaction', label: 'Human Interaction', checked: log.mandate_interaction },
   ];
 
   const isPracticeMode = day === 0;
@@ -108,14 +112,14 @@ export function Dashboard({ initialDailyLog, day, mulligans, rules = [] }: Dashb
         <AnchorList 
           title="The 4 Anchors" 
           items={anchors} 
-          onToggle={(id) => handleToggle(id, optimisticLog[id as keyof DailyLog] as boolean)}
+          onToggle={(id) => handleToggle(id, log[id as keyof DailyLog] as boolean)}
           isPracticeMode={isPracticeMode} 
         />
         
         <AnchorList 
           title="Daily Mandates" 
           items={mandates} 
-          onToggle={(id) => handleToggle(id, optimisticLog[id as keyof DailyLog] as boolean)}
+          onToggle={(id) => handleToggle(id, log[id as keyof DailyLog] as boolean)}
           isPracticeMode={isPracticeMode} 
         />
         

@@ -20,9 +20,10 @@ interface HeatMapProps {
   logs: DailyLog[];
 }
 
-export default function HeatMap({ logs }: HeatMapProps) {
+export default function HeatMap({ logs = [] }: HeatMapProps) {
   // Generate the last 90 days
   const days = useMemo(() => {
+    if (!logs) return [];
     const today = new Date();
     const startDate = subDays(today, 89); // 90 days inclusive
     

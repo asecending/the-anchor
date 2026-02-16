@@ -20,16 +20,24 @@ export function DashboardHeader({ day, totalDays, mulligans }: DashboardHeaderPr
         </h1>
         {day > 0 && <p className="text-sm text-slate-400">of {totalDays}</p>}
       </Link>
-      <div className="flex gap-2">
-        {hearts.map((_, index) => (
-          <Heart
-            key={index}
-            className={clsx(
-              "w-6 h-6 transition-colors duration-300",
-              index < mulligans ? "text-rose-500 fill-rose-500" : "text-slate-600"
-            )}
-          />
-        ))}
+      <div className="flex items-center gap-4">
+        <Link 
+          href="/history" 
+          className="text-xs font-medium text-slate-400 hover:text-emerald-400 transition-colors uppercase tracking-wider hidden sm:block"
+        >
+          View Stats
+        </Link>
+        <div className="flex gap-2">
+          {hearts.map((_, index) => (
+            <Heart
+              key={index}
+              className={clsx(
+                "w-6 h-6 transition-colors duration-300",
+                index < mulligans ? "text-rose-500 fill-rose-500" : "text-slate-600"
+              )}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
