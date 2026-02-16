@@ -4,6 +4,8 @@ import IntegrityScore from '@/components/history/IntegrityScore';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default async function HistoryPage() {
   const logs = await getProtocolHistory();
 

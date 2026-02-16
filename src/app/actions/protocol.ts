@@ -6,31 +6,37 @@ import { subDays, format } from 'date-fns';
 import { enforceSafetyNet } from './rules';
 
 export async function getProtocolHistory() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  if (!user) {
-    throw new Error('User not authenticated');
+    if (!user) {
+      console.warn('getProtocolHistory: User not authenticated');
+      return [];
+    }
+
+    const ninetyDaysAgo = subDays(new Date(), 90);
+    const formattedDate = format(ninetyDaysAgo, 'yyyy-MM-dd');
+
+    const { data: logs, error } = await supabase
+      .from('daily_logs')
+      .select('*')
+      .eq('user_id', user.id)
+      .gte('date', formattedDate)
+      .order('date', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching protocol history:', error);
+      return [];
+    }
+
+    return logs || [];
+  } catch (error) {
+    console.error('Unexpected error in getProtocolHistory:', error);
+    return [];
   }
-
-  const ninetyDaysAgo = subDays(new Date(), 90);
-  const formattedDate = format(ninetyDaysAgo, 'yyyy-MM-dd');
-
-  const { data: logs, error } = await supabase
-    .from('daily_logs')
-    .select('*')
-    .eq('user_id', user.id)
-    .gte('date', formattedDate)
-    .order('date', { ascending: true });
-
-  if (error) {
-    console.error('Error fetching protocol history:', error);
-    throw new Error('Failed to fetch protocol history');
-  }
-
-  return logs;
 }
 
 export async function updateDailyLog(
