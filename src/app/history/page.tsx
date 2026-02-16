@@ -23,13 +23,29 @@ export default async function HistoryPage() {
           </h1>
         </div>
 
-        {/* Integrity Score */}
-        <IntegrityScore logs={logs} />
+        {(!logs || logs.length === 0) ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
+            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center">
+              <span className="text-2xl">🪞</span>
+            </div>
+            <div>
+              <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">No Data Yet</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs mx-auto mt-1">
+                Your history will appear here once you complete your first day.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Integrity Score */}
+            <IntegrityScore logs={logs} />
 
-        {/* Heat Map */}
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
-          <HeatMap logs={logs} />
-        </div>
+            {/* Heat Map */}
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
+              <HeatMap logs={logs} />
+            </div>
+          </>
+        )}
 
         {/* Insight/Footer (Optional placeholder for future) */}
         <div className="text-center text-xs text-slate-400 mt-8">

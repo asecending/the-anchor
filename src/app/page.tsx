@@ -17,8 +17,11 @@ export default async function Home() {
 
   // Calculate current day
   const now = new Date();
-  // Reset hours to ensure clean day comparison
-  const currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  // Use 'America/New_York' time for accurate day calculation
+  const estDateString = now.toLocaleDateString('en-US', { timeZone: 'America/New_York' });
+  const currentDate = new Date(estDateString);
+  
+  // Ensure start date is also treated as midnight in local time context
   const startDate = new Date(START_DATE.getFullYear(), START_DATE.getMonth(), START_DATE.getDate());
   
   const diffTime = currentDate.getTime() - startDate.getTime();
