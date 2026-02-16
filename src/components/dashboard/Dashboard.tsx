@@ -92,6 +92,8 @@ export function Dashboard({ initialDailyLog, day, mulligans, rules = [] }: Dashb
     { id: 'mandate_interaction', label: 'Human Interaction', checked: optimisticLog.mandate_interaction },
   ];
 
+  const isPracticeMode = day === 0;
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-32">
       <PanicOverlay />
@@ -106,13 +108,15 @@ export function Dashboard({ initialDailyLog, day, mulligans, rules = [] }: Dashb
         <AnchorList 
           title="The 4 Anchors" 
           items={anchors} 
-          onToggle={(id) => handleToggle(id, optimisticLog[id as keyof DailyLog] as boolean)} 
+          onToggle={(id) => handleToggle(id, optimisticLog[id as keyof DailyLog] as boolean)}
+          isPracticeMode={isPracticeMode} 
         />
         
         <AnchorList 
           title="Daily Mandates" 
           items={mandates} 
-          onToggle={(id) => handleToggle(id, optimisticLog[id as keyof DailyLog] as boolean)} 
+          onToggle={(id) => handleToggle(id, optimisticLog[id as keyof DailyLog] as boolean)}
+          isPracticeMode={isPracticeMode} 
         />
         
         {day >= 91 && (

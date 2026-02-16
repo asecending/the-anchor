@@ -12,13 +12,19 @@ interface AnchorListProps {
   title: string;
   items: AnchorItem[];
   onToggle: (id: string) => void;
+  isPracticeMode?: boolean;
 }
 
-export function AnchorList({ title, items, onToggle }: AnchorListProps) {
+export function AnchorList({ title, items, onToggle, isPracticeMode }: AnchorListProps) {
   return (
     <div className="mb-8">
-      <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 px-4">
-        {title}
+      <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 px-4 flex justify-between items-center">
+        <span>{title}</span>
+        {isPracticeMode && (
+          <span className="text-[10px] text-emerald-400 bg-emerald-950/50 px-2 py-1 rounded border border-emerald-900">
+            PRACTICE MODE
+          </span>
+        )}
       </h2>
       <div className="space-y-2 px-4">
         {items.map((item) => (

@@ -15,10 +15,10 @@ export function DashboardHeader({ day, totalDays, mulligans }: DashboardHeaderPr
     <div className="flex items-center justify-between py-6 px-4 border-b border-slate-800">
       <Link href="/history" className="group">
         <h1 className="text-2xl font-bold text-slate-100 group-hover:text-emerald-400 transition-colors flex items-center gap-2">
-          Day {day}
+          {day === 0 ? "Day 0: Preparation" : `Day ${day}`}
           <Activity className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity text-emerald-500" />
         </h1>
-        <p className="text-sm text-slate-400">of {totalDays}</p>
+        {day > 0 && <p className="text-sm text-slate-400">of {totalDays}</p>}
       </Link>
       <div className="flex gap-2">
         {hearts.map((_, index) => (

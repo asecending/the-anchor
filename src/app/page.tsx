@@ -3,8 +3,8 @@ import { Dashboard, DailyLog } from '@/components/dashboard/Dashboard';
 import { format } from 'date-fns';
 import { getProtocolRules, ProtocolRule } from '@/app/actions/rules';
 
-// Mock Start Date (e.g., Feb 1, 2026)
-const START_DATE = new Date('2026-02-01');
+// Protocol Start Date: Tuesday, Feb 17, 2026
+const START_DATE = new Date('2026-02-17T00:00:00-05:00'); // EST
 
 export default async function Home() {
   const supabase = await createClient();
@@ -15,9 +15,18 @@ export default async function Home() {
 
   // Calculate current day
   const now = new Date();
-  const diffTime = Math.abs(now.getTime() - START_DATE.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-  const currentDay = diffDays > 0 ? diffDays : 1;
+  // Reset hours to ensure clean day comparison
+  const currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startDate = new Date(START_DATE.getFullYear(), START_DATE.getMonth(), START_DATE.getDate());
+  
+  const diffTime = currentDate.getTime() - startDate.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  // Logic: 
+  // If diffDays < 0 (Before start date) -> Day 0
+  // If diffDays >= 0 (On or after start date) -> Day (diff + 1)
+  
+  const currentDay = diffDays >= 0 ? diffDays + 1 : 0;
   const todayStr = format(now, 'yyyy-MM-dd');
 
   let initialDailyLog: DailyLog = {
