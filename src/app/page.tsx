@@ -7,6 +7,8 @@ import { getProtocolRules, ProtocolRule } from '@/app/actions/rules';
 const START_DATE = new Date('2026-02-17T00:00:00-05:00'); // EST
 
 export default async function Home() {
+  console.log('Current Server Time:', new Date().toISOString());
+  console.log('Protocol Start Date:', START_DATE.toISOString());
   const supabase = await createClient();
 
   const {
